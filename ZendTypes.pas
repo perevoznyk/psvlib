@@ -9,7 +9,7 @@
 {*******************************************************}
 {$I PHP.INC}
 
-{ $Id: ZendTypes.pas,v 7.0 04/2007 delphi32 Exp $ }
+{ $Id: ZendTypes.pas,v 6.2 02/2006 delphi32 Exp $ }
 
 unit ZENDTypes;
 
@@ -211,11 +211,6 @@ const
   ZEND_HANDLE_FP                                  = 2;
   ZEND_HANDLE_STDIOSTREAM                         = 3;
   ZEND_HANDLE_FSTREAM                             = 4;
-
-  {$IFDEF PHP5}
-  ZEND_HANDLE_STREAM                              = 5;
-  {$ENDIF}
-  
   ZEND_FETCH_STANDARD                             = 0;
   ZEND_FETCH_ADD_LOCK                             = 1;
   ZEND_MEMBER_FUNC_CALL                           = 1 shl 0;
@@ -238,9 +233,7 @@ const
   E_USER_ERROR                                    = (1 shl 8);
   E_USER_WARNING                                  = (1 shl 9);
   E_USER_NOTICE                                   = (1 shl 10);
-  E_STRICT                                        = (1 shl 11);
-  E_RECOVERABLE_ERROR                             = (1 shl 12);
-  E_ALL = (E_ERROR or E_WARNING or E_PARSE or E_NOTICE or E_CORE_ERROR or E_CORE_WARNING or E_COMPILE_ERROR or E_COMPILE_WARNING or E_USER_ERROR or E_USER_WARNING or E_USER_NOTICE or E_RECOVERABLE_ERROR);
+  E_ALL                                           = (E_ERROR or E_WARNING or E_PARSE or E_NOTICE or E_CORE_ERROR or E_CORE_WARNING or E_COMPILE_ERROR or E_COMPILE_WARNING or E_USER_ERROR or E_USER_WARNING or E_USER_NOTICE);
   E_CORE                                          = (E_CORE_ERROR or E_CORE_WARNING);
 
   //zend.h
@@ -690,7 +683,6 @@ type
     handle_property_set: pointer;
   end;
   {$ELSE}
-
   Tzend_class_entry = record
    _type : char;
    name : pchar;
@@ -718,9 +710,6 @@ type
    __isset : PZendFunction;
    {$ENDIF}
    __call: PZendFunction;
-   {$IFDEF PHP520}
-   __tostring : pointer;
-   {$ENDIF}
    {$IFDEF PHP510}
    serialize_func : PZendFunction;
    unserialize_func : PZendFunction;
@@ -887,17 +876,16 @@ type
 {$IFDEF PHP5}
 type
    zend_stream_reader_t = function(handle : pointer; buf : pChar; len : size_t; TSRMLS_DC : pointer) : size_t; cdecl;
-   zend_stream_closer_t = procedure(handle : pointer; TSRMLS_DC : pointer); cdecl;
-   zend_stream_fteller_t = function(handle : pointer; TSRMLS_DC : pointer) : longint; cdecl;
+   zend_strem_closer_t = procedure(handle : pointer; TSRMLS_DC : pointer); cdecl;
 
   _zend_stream = record
    handle : pointer;
-   reader : zend_stream_reader_t;
-   closer : zend_stream_closer_t;
+   reader : pointer;
+   closer : pointer;
    {$IFDEF PHP510}
-   fteller : zend_stream_fteller_t;
+   fteller : pointer;
    {$ENDIF}
-   interactive : integer;
+   interactive : pointer;
    end;
    TZendStream = _zend_stream;
    PZendStream = ^TZendStream;
@@ -1026,13 +1014,11 @@ type
     request_shutdown_func: pointer;
     info_func: pointer;
     version: pchar;
-    {$IFDEF PHP5}
     {$IFDEF PHP520}
     globals_size : size_t;
     globals_id_ptr : pointer;
     globals_ctor : pointer;
     globals_dtor : pointer;
-    {$ENDIF}
     {$ENDIF}
     {$IFDEF PHP5}
     post_deactivate_func : pointer;
@@ -1239,7 +1225,6 @@ type
   end;
 
   jump_buf = array[0..63] of byte;
-  p_jump_buf = ^jump_buf;
 
 {$IFDEF PHP5}
 type  _zend_objects_store = record
@@ -1293,11 +1278,7 @@ type
 
      included_files : THashTable;	// files already included */
 
-     {$IFDEF PHP4}
      bailout : jump_buf;
-     {$ELSE}
-     bailout : p_jump_buf;
-     {$ENDIF}
 
      error_reporting : integer;
      orig_error_reporting : integer;
@@ -1326,10 +1307,7 @@ type
      {$ENDIF}
      {$ENDIF}
 
-     {$IFDEF PHP4}
      bailout_set : zend_bool;
-     {$ENDIF}
-
      full_tables_cleanup : zend_bool;
      {$IFDEF PHP5}
      ze1_compatibility_mode : zend_bool;
